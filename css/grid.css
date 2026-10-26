@@ -1,0 +1,14 @@
+.grid {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--min), 100%), 1fr));
+}
+
+/* Exact column count (set via the "columns" option), easing down on narrow embeds */
+[data-cols="fixed"] .grid { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
+@media (max-width: 560px) {
+  [data-cols="fixed"] .grid { grid-template-columns: repeat(var(--cols-md), minmax(0, 1fr)); }
+}
+@media (max-width: 340px) {
+  [data-cols="fixed"] .grid { grid-template-columns: minmax(0, 1fr); }
+}

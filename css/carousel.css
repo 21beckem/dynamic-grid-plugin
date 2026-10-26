@@ -1,0 +1,49 @@
+.carousel { position: relative; }
+
+.track {
+  display: flex;
+  gap: var(--gap);
+  padding: 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  scrollbar-width: none;
+}
+.track::-webkit-scrollbar { display: none; }
+.track:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-radius: 10px; }
+
+.track > .card {
+  flex: 0 0 min(var(--min), 85%);
+  scroll-snap-align: start;
+}
+
+/* Exact visible-card count */
+[data-cols="fixed"] .track > .card {
+  flex-basis: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+}
+@media (max-width: 560px) {
+  [data-cols="fixed"] .track > .card {
+    flex-basis: calc((100% - (var(--cols-md) - 1) * var(--gap)) / var(--cols-md));
+  }
+}
+@media (max-width: 340px) {
+  [data-cols="fixed"] .track > .card { flex-basis: 100%; }
+}
+
+.nav {
+  position: absolute; top: 50%; z-index: 2;
+  display: grid; place-items: center; width: 40px; height: 40px; padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--card); color: var(--fg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+.nav-prev { left: 8px; }
+.nav-next { right: 8px; }
+.nav:hover { border-color: var(--accent); color: var(--accent); }
+.nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nav:disabled { opacity: 0; pointer-events: none; }
+.no-overflow .nav { display: none; }

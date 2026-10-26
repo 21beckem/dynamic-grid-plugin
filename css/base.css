@@ -1,0 +1,88 @@
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+:root {
+  /* Set from URL options by embed.js */
+  --accent: #2f5d8a;
+  --gap: 16px;
+  --min: 220px;
+  --aspect: 4 / 3;
+
+  /* Theme tokens (default = transparent theme: dark text, white cards) */
+  --bg: transparent;
+  --fg: #1d232b;
+  --muted: #59626d;
+  --line: rgba(29, 35, 43, 0.16);
+  --card: #fff;
+  --placeholder: #e9edf1;
+  --danger: #b3261e;
+}
+:root[data-theme="light"] { --bg: #fff; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #13171c;
+  --fg: #eef1f5;
+  --muted: #a5afbb;
+  --line: rgba(255, 255, 255, 0.16);
+  --card: #1b2027;
+  --placeholder: #252b33;
+  --danger: #ff8a80;
+}
+
+html, body { margin: 0; background: var(--bg); }
+body {
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--fg);
+  -webkit-text-size-adjust: 100%;
+}
+#app { padding: 4px; } /* room for focus outlines at the iframe edge */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Loading / error states */
+.status { margin: 0; padding: 32px 12px; text-align: center; color: var(--muted); }
+
+.notice {
+  max-width: 36rem; margin: 12px auto; padding: 16px 18px;
+  border: 1px solid var(--line); border-left: 4px solid var(--danger); border-radius: 8px;
+  background: var(--card); color: var(--fg);
+}
+.notice-title { margin: 0 0 6px; font-size: 1.0625rem; font-weight: 600; }
+.notice-list { margin: 0 0 12px; padding-left: 1.2em; color: var(--muted); font-size: 0.9375rem; }
+.notice-link {
+  display: inline-block; padding: 6px 12px; border: 1px solid var(--fg); border-radius: 6px;
+  color: var(--fg); font-size: 0.9375rem; text-decoration: none;
+}
+.notice-link:hover { background: var(--fg); color: var(--card); }
+.notice-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Card (shared by every view) */
+.card {
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+  background: var(--card); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 10px;
+  text-decoration: none;
+}
+a.card { transition: border-color 0.15s; }
+a.card:hover { border-color: var(--accent); }
+a.card:hover .card-title { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.card-media { position: relative; aspect-ratio: var(--aspect); overflow: hidden; background: var(--placeholder); }
+.card-media img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.card-media.is-empty {
+  /* a single diagonal stroke is the usual "no image" mark */
+  background-image: linear-gradient(135deg, transparent 49%, var(--line) 49%, var(--line) 51%, transparent 51%);
+}
+
+.card-body { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; }
+.card-title { margin: 0; font-size: 1rem; line-height: 1.3; font-weight: 600; overflow-wrap: anywhere; }
+.card-desc {
+  margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--muted); white-space: pre-line;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

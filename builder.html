@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dynamic Grid Plugin</title>
+  <link rel="stylesheet" href="css/builder.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Dynamic Grid Plugin builder</h1>
+    <p>Fill in the form to get a link for Google Sites. In Sites, choose Insert → Embed → By URL, then paste the link.</p>
+  </header>
+
+  <div class="layout">
+    <form id="form" class="form" autocomplete="off" novalidate></form>
+
+    <aside class="output">
+      <section class="url-box">
+        <label for="embed-url">Embed link</label>
+        <div class="url-row">
+          <input id="embed-url" type="text" readonly placeholder="Enter a Sheet ID to get your link">
+          <button id="copy" type="button" disabled>Copy link</button>
+        </div>
+        <p id="url-note" class="note"></p>
+      </section>
+
+      <section class="preview">
+        <div class="preview-head">
+          <h2>Preview</h2>
+          <div id="sizes" class="sizes" role="group" aria-label="Preview width">
+            <button type="button" data-width="375" aria-pressed="false">Phone</button>
+            <button type="button" data-width="768" aria-pressed="false">Tablet</button>
+            <button type="button" data-width="" aria-pressed="true">Full</button>
+          </div>
+        </div>
+        <div id="frame" class="frame" data-empty>
+          <iframe id="preview" title="Embed preview"></iframe>
+        </div>
+        <p class="note">Drag the bottom-right corner of the preview to try other sizes.</p>
+      </section>
+    </aside>
+  </div>
+
+  <datalist id="columns"></datalist>
+  <noscript><p>This builder needs JavaScript.</p></noscript>
+  <script type="module" src="js/builder.js"></script>
+</body>
+</html>
