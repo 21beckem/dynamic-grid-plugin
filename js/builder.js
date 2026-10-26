@@ -2,7 +2,7 @@
 // add a factory to `controls` below. Each factory returns { node, get(), set(v) }.
 
 import { OPTIONS, GROUPS, parseValue, parseOptions, buildQuery } from './options.js';
-import { loadSheet } from './sheets.js';
+import { loadSheet, parseSheetId } from './sheets.js';
 import { UserError, el, debounce } from './util.js';
 
 const form = document.getElementById('form');
@@ -20,23 +20,23 @@ const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 // ---- control factories --------------------------------------------------------
 
 const controls = {
-  text(option, ctx) {
+  text(option, ctx = { onChange:()=>{} }) {
     const input = el('input', {
       type: 'text', id: idFor(option), name: option.key,
       placeholder: option.placeholder || '', spellcheck: 'false',
     });
     input.addEventListener('input', ctx.onChange);
-    return { node: input, get: () => input.value, set: (v) => { input.value = v; } };
+    return { node: input, get: () => input.value, set: (v) => { input.value = v; }, onChange: ctx.onChange };
   },
 
-  field(option, ctx) {
+  field(option, ctx = { onChange:()=>{} }) {
     const control = controls.text(option, ctx);
     control.node.placeholder = option.placeholder || 'Automatic';
     control.node.setAttribute('list', 'columns'); // suggestions come from the loaded sheet
     return control;
   },
 
-  number(option, ctx) {
+  number(option, ctx = { onChange:()=>{} }) {
     const input = el('input', {
       type: 'number', id: idFor(option), name: option.key, inputmode: 'numeric',
       min: option.min, max: option.max, step: option.integer ? 1 : 'any',
@@ -44,10 +44,10 @@ const controls = {
     });
     input.addEventListener('input', ctx.onChange);
     const node = el('div', { class: 'with-unit' }, input, option.unit && el('span', { class: 'unit', text: option.unit }));
-    return { node, get: () => input.value, set: (v) => { input.value = v; } };
+    return { node, get: () => input.value, set: (v) => { input.value = v; }, onChange: ctx.onChange };
   },
 
-  select(option, ctx) {
+  select(option, ctx = { onChange:()=>{} }) {
     const fallback = option.default ?? option.choices[0];
     const select = el(
       'select', { id: idFor(option), name: option.key },
@@ -62,10 +62,11 @@ const controls = {
         const match = option.choices.find((c) => c.toLowerCase() === String(v).toLowerCase());
         select.value = match ?? fallback;
       },
+      onChange: ctx.onChange
     };
   },
 
-  color(option, ctx) {
+  color(option, ctx = { onChange:()=>{} }) {
     const text = el('input', {
       type: 'text', id: idFor(option), name: option.key, maxlength: 7,
       placeholder: option.default, spellcheck: 'false',
@@ -84,6 +85,7 @@ const controls = {
         text.value = v;
         picker.value = parseValue(option, v).value || option.default;
       },
+      onChange: ctx.onChange
     };
   },
 };
@@ -169,7 +171,7 @@ function update() {
   const shown = Object.fromEntries(
     Object.entries(values).filter(([key]) => isVisible(entries.get(key).option))
   );
-  const url = new URL('google-sheets.html', location.href);
+  const url = new URL('../', location.href);
   url.search = buildQuery(shown);
   urlInput.value = url.href;
 
@@ -183,7 +185,7 @@ function update() {
 
 let checkToken = 0;
 function fillColumns(headers) {
-  columnList.replaceChildren(...headers.map((h) => el('option', { value: h })));
+  columnList.replaceChildren(...headers.map((h) => el('option', { value: `{{${h}}}`, text: h })));
 }
 function setSheetStatus(text, state = '') {
   sheetStatus.textContent = text;
@@ -194,6 +196,14 @@ async function checkSheet() {
   const token = ++checkToken;
   const raw = readRaw();
   if (!raw.uid.trim()) { fillColumns([]); setSheetStatus(''); return; }
+  let parsed = parseSheetId(raw.uid);
+  if (parsed !== null && parsed.id !== raw.uid.trim()) {
+    entries.get('uid').control.set(parsed.id);
+    if (parsed.gid)
+      entries.get('sheet').control.set(parsed.gid);
+    entries.get('uid').control.onChange();
+    return;
+  }
   setSheetStatus('Checking the sheet…', 'busy');
   try {
     const table = await loadSheet({ uid: raw.uid, sheet: raw.sheet.trim(), cacheSeconds: 0 });

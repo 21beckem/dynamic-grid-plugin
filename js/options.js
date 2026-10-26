@@ -45,7 +45,7 @@ export const OPTIONS = [
   {
     key: 'title', group: 'content', type: 'field',
     label: 'Title',
-    help: 'A column name, plain text, or a template like {First} {Last}. When empty, a column named title or name is used, otherwise the first column.',
+    help: 'A column name, plain text, or a template like {{First}} {{Last}}. When empty, a column named title or name is used, otherwise the first column.',
   },
   {
     key: 'description', group: 'content', type: 'field',
@@ -55,7 +55,7 @@ export const OPTIONS = [
   {
     key: 'image', group: 'content', type: 'field',
     label: 'Image',
-    help: 'A column of image URLs. Google Drive share links work. When empty, a column named image or photo is used if there is one.',
+    help: 'A column of image URLs. Google Drive share links work. When empty, a column named image or photo is used if there is one. NOTE: If the link to the image is from a form response, the folder with the images usually isn\'t public by default. You may need to open the folder and click "Share" → Change to "anyone with the link".',
   },
   {
     key: 'link', group: 'content', type: 'field',

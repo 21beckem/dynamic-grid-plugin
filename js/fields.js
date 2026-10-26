@@ -12,7 +12,7 @@ const AUTO = {
 };
 
 const NONE = { kind: 'none', get: () => '' };
-const TOKEN = /\{([^{}]+)\}/g;
+const TOKEN = /\{\{([^{}]+)\}\}/g;
 
 function column(index, header) {
   return { kind: 'column', header, get: (row) => row[index] ?? '' };
@@ -63,7 +63,6 @@ export function compileField(spec, headers, role) {
     }
     return role === 'title' && headers.length ? column(0, headers[0]) : NONE;
   }
-
   const exact = lowered.indexOf(text.toLowerCase());
   if (exact >= 0) return column(exact, headers[exact]);
   if (/\{[^{}]+\}/.test(text)) return template(text, headers, lowered);

@@ -65,9 +65,12 @@ export function parseCsv(text) {
 
 // ---- gviz (regular sheet IDs) -------------------------------------------------
 
-function gvizUrl(id, selector, tqx) {
+function gvizUrl(id, selector, tqx, forceRefresh = false) {
   const params = new URLSearchParams({ tqx, headers: '1' });
   if (selector) params.set(/^\d+$/.test(selector) ? 'gid' : 'sheet', selector);
+  if (forceRefresh) {
+    params.set('t', Date.now().toString());
+  }
   return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?${params}`;
 }
 
@@ -124,14 +127,14 @@ function jsonp(makeUrl) {
   });
 }
 
-async function loadGviz(id, selector) {
+async function loadGviz(id, selector, forceRefresh = false) {
   try {
-    return tableFromGviz(parseGvizText(await fetchText(gvizUrl(id, selector, 'out:json'))));
+    return tableFromGviz(parseGvizText(await fetchText(gvizUrl(id, selector, 'out:json', forceRefresh))));
   } catch (err) {
     if (err instanceof UserError) throw err;
   }
   try {
-    return tableFromGviz(await jsonp((cb) => gvizUrl(id, selector, `out:json;responseHandler=${cb}`)));
+    return tableFromGviz(await jsonp((cb) => gvizUrl(id, selector, `out:json;responseHandler=${cb}`, forceRefresh)));
   } catch (err) {
     if (err instanceof UserError) throw err;
     throw new UserError('Couldn’t load the sheet.', SHARE_HINTS);
@@ -140,13 +143,16 @@ async function loadGviz(id, selector) {
 
 // ---- published-to-web CSV (2PACX-… IDs) ---------------------------------------
 
-async function loadPublishedCsv(id, selector) {
+async function loadPublishedCsv(id, selector, forceRefresh = false) {
   if (selector && !/^\d+$/.test(selector)) {
     throw new UserError('Published sheets can only be picked by gid.', [
       'Use the number after gid= in the tab’s URL instead of the tab name.',
     ]);
   }
   const url = new URL(`https://docs.google.com/spreadsheets/d/e/${id}/pub`);
+  if (forceRefresh) {
+    url.searchParams.set('t', Date.now().toString());
+  }
   url.searchParams.set('output', 'csv');
   if (selector) url.searchParams.set('gid', selector);
   try {
@@ -179,7 +185,7 @@ function writeCache(key, table) {
  * @param {{uid: string, sheet?: string, cacheSeconds?: number}} opts
  * @returns {Promise<{headers: string[], rows: string[][]}>}
  */
-export async function loadSheet({ uid, sheet = '', cacheSeconds = 60 } = {}) {
+export async function loadSheet({ uid, sheet = '', cacheSeconds = 60, forceRefresh = false } = {}) {
   const parsed = parseSheetId(uid);
   if (!parsed) {
     throw new UserError('That doesn’t look like a Google Sheets ID.', [
@@ -191,8 +197,8 @@ export async function loadSheet({ uid, sheet = '', cacheSeconds = 60 } = {}) {
   const cached = readCache(key, cacheSeconds);
   if (cached) return cached;
   const table = parsed.published
-    ? await loadPublishedCsv(parsed.id, selector)
-    : await loadGviz(parsed.id, selector);
+    ? await loadPublishedCsv(parsed.id, selector, forceRefresh)
+    : await loadGviz(parsed.id, selector, forceRefresh);
   writeCache(key, table);
   return table;
 }

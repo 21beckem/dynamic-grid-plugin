@@ -22,7 +22,7 @@ function applyAppearance(values) {
 }
 
 function builderHref() {
-  const url = new URL('builder.html', location.href);
+  const url = new URL('./builder/', location.href);
   url.search = location.search; // carry the current settings into the builder
   return url.href;
 }

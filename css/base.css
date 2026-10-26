@@ -1,6 +1,13 @@
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
+.watermark {
+  position: fixed; bottom: 0; right: 0; z-index: 9999;
+  margin: 8px; margin: 4px 8px; font-size: 0.75rem; color: var(--muted); text-decoration: none;
+  color: var(--muted); font-size: 0.75rem; text-decoration: none;
+}
+.watermark:hover { color: var(--accent); }
+
 :root {
   /* Set from URL options by embed.js */
   --accent: #2f5d8a;
