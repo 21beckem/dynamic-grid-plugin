@@ -29,7 +29,7 @@ function createMedia(item) {
  * @param {{hasImage:boolean}} ctx
  */
 export function createCard(item, ctx) {
-  const media = ctx.hasImage ? createMedia(item) : null;
+  const media = item.enableImage && ctx.hasImage ? createMedia(item) : null;
   const body =
     item.title || item.description
       ? el(
@@ -44,7 +44,7 @@ export function createCard(item, ctx) {
   if (!href) return el('article', { class: 'card' }, media, body);
   return el(
     'a',
-    { class: 'card', href, target: '_blank', rel: 'noopener noreferrer' },
+    { class: 'card', href, target: item.linkTarget, rel: 'noopener noreferrer' },
     media,
     body,
     el('span', { class: 'sr-only', text: 'Opens in a new tab' })

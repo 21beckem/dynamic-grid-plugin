@@ -15,19 +15,28 @@ export class UserError extends Error {
  * `class` sets className. Null/false attributes and children are skipped.
  * Strings are always inserted as text, never as HTML.
  */
-export function el(tag, attrs = {}, ...children) {
+export function el(tag, ...children) {
   const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(attrs || {})) {
-    if (value === undefined || value === null || value === false) continue;
-    if (key === 'class') node.className = value;
-    else if (key === 'text') node.textContent = value;
-    else if (key.startsWith('on') && typeof value === 'function') {
-      node.addEventListener(key.slice(2).toLowerCase(), value);
-    } else node.setAttribute(key, value === true ? '' : String(value));
-  }
   for (const child of children.flat()) {
     if (child === undefined || child === null || child === false) continue;
-    node.append(child);
+    if (typeof child === 'string') {
+      node.append(document.createTextNode(child));
+      continue;
+    }
+    if (child instanceof Node) {
+      node.append(child);
+      continue;
+    }
+    if (typeof child === 'object') {
+      for (const [key, value] of Object.entries(child)) {
+        if (value === undefined || value === null || value === false) continue;
+        if (key === 'class') node.className = value;
+        else if (key === 'text') node.textContent = value;
+        else if (key.startsWith('on') && typeof value === 'function') {
+          node.addEventListener(key.slice(2).toLowerCase(), value);
+        } else node.setAttribute(key, value === true ? '' : String(value));
+      }
+    }
   }
   return node;
 }
@@ -71,5 +80,38 @@ export function debounce(fn, ms) {
   return (...args) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+export function openModal(contentsNode) {
+  const backdrop = el('div', { class: 'modal-backdrop' });
+  const container = el('div', { class: 'modal-container' },
+    el('span', { class: 'modal-close', onclick: () => removeListener(), text: '×' }),
+    el('div', { class: 'modal-contents' }, contentsNode)
+  );
+  const node = el('div',
+    { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
+    backdrop,
+    container
+  );
+  const removeListener = () => {
+    node?.remove();
+    backdrop?.removeEventListener('click', removeListener);
+    document.removeEventListener('keydown', keyListener);
+  };
+  const keyListener = (e) => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    removeListener();
+  };
+  setTimeout(() => node.classList.add('is-open'), 10); // allow CSS transition
+  backdrop?.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) removeListener();
+  }, { once: true })
+  document.addEventListener('keydown', keyListener);
+  document.body.append(node);
+  return {
+    node,
+    remove: removeListener
   };
 }

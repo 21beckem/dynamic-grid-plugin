@@ -62,6 +62,16 @@ export const OPTIONS = [
     label: 'Link',
     help: 'A column of web addresses. Cards open them in a new tab. The cell must contain the address itself, not a hyperlink with other text.',
   },
+  {
+    key: 'linkTarget', group: 'content', type: 'select', choices: ['New Tab', 'Within the frame', 'Current Tab'], values: ['_blank', '_self', '_parent'], default: '_blank',
+    label: 'Link Target',
+    help: 'Where card links open. "New Tab" and "Within the frame" are safest and will work in almost all contexts. "Current Tab" opens the link in the same tab, but will only work if the parent page allows it (e.g. not in Google Sites).',
+  },
+  {
+    key: 'emptyMessage', group: 'content', type: 'text', defaultInBuilder: 'No results found {{details}}',
+    label: 'Empty Message',
+    help: 'A message to display when there are no cards to show.',
+  },
 
   {
     key: 'view', group: 'layout', type: 'select',
@@ -78,6 +88,11 @@ export const OPTIONS = [
     help: 'Used when Columns is empty.',
   },
   {
+    key: 'enableImage', group: 'layout', type: 'select', choices: ['Yes', 'No'], values: ['1', '0'], default: '1',
+    label: 'Enable Images',
+    help: 'If "No", cards will not show images even if the Image column is set. This can be used to save space or bandwidth, or to avoid broken images when the Image column is empty.',
+  },
+  {
     key: 'aspect', group: 'layout', type: 'select', choices: ['16:9', '3:2', '4:3', '1:1', '3:4'], default: '4:3',
     label: 'Image shape', help: 'Width to height ratio of card images.',
   },
@@ -91,9 +106,14 @@ export const OPTIONS = [
   },
 
   {
-    key: 'theme', group: 'appearance', type: 'select', choices: ['transparent', 'light', 'dark'], default: 'transparent',
+    key: 'background', group: 'appearance', type: 'select', choices: ['Transparent', 'Light', 'Dark'], values: ['transparent', 'light', 'dark'], default: 'transparent',
     label: 'Background',
-    help: 'Transparent leaves the page background to Google Sites. Dark switches the text and cards to a dark palette.',
+    help: 'Transparent leaves the page background to he parent page.',
+  },
+  {
+    key: 'theme', group: 'appearance', type: 'select', choices: ['light', 'dark'], default: 'light',
+    label: 'Theme',
+    help: 'Dark switches the text and cards to a dark palette.',
   },
   {
     key: 'accent', group: 'appearance', type: 'color', default: '#2f5d8a',
@@ -130,7 +150,7 @@ const PARSERS = {
     return bad ? { error: numberError(option) } : { value: n };
   },
   select(text, option) {
-    const match = option.choices.find((c) => c.toLowerCase() === text.toLowerCase());
+    const match = (option.values ?? option.choices).find((c) => c.toLowerCase() === text.toLowerCase());
     return match
       ? { value: match }
       : { error: `“${option.key}” must be one of: ${option.choices.join(', ')}.` };

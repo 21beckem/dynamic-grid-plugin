@@ -2,7 +2,7 @@ import { parseOptions } from './options.js';
 import { loadSheet } from './sheets.js';
 import { compileField } from './fields.js';
 import { views } from './views/index.js';
-import { UserError, el } from './util.js';
+import { UserError, el, openModal } from './util.js';
 
 const root = document.getElementById('app');
 
@@ -10,6 +10,7 @@ function applyAppearance(values) {
   const html = document.documentElement;
   const style = html.style;
   html.dataset.theme = values.theme;
+  html.dataset.backgroundTheme = values.background;
   style.setProperty('--accent', values.accent);
   style.setProperty('--gap', `${values.gap}px`);
   style.setProperty('--min', `${values.minWidth}px`);
@@ -21,9 +22,11 @@ function applyAppearance(values) {
   }
 }
 
-function builderHref() {
+function builderHref(includeQuery = true) {
   const url = new URL('./builder/', location.href);
-  url.search = location.search; // carry the current settings into the builder
+  if (includeQuery) {
+    url.search = location.search; // carry the current settings into the builder
+  }
   return url.href;
 }
 
@@ -36,6 +39,20 @@ function showNotice(headline, details = []) {
       el('h2', { class: 'notice-title', text: headline }),
       details.length ? el('ul', { class: 'notice-list' }, details.map((d) => el('li', { text: d }))) : null,
       el('a', { class: 'notice-link', href: builderHref(), target: '_blank', rel: 'noopener' }, 'Open the builder to fix this')
+    )
+  );
+}
+
+function showMessage(headline, details = []) {
+  root.setAttribute('aria-busy', 'false');
+  const showDetails = (headline ?? '').includes('{{details}}');
+  if (showDetails) headline = headline.replace('{{details}}', '');
+  root.replaceChildren(
+    el(
+      'section',
+      { style: 'text-align: center;', },
+      el('h2', { }, headline),
+      showDetails && details.length ? el('ul', details.map((d) => el('li', { text: d }))) : null
     )
   );
 }
@@ -63,12 +80,14 @@ async function main() {
         description: fields.description.get(row),
         image: fields.image.get(row),
         link: fields.link.get(row),
+        linkTarget: values.linkTarget,
+        enableImage: values.enableImage !== '0', // just in case enableImage is undefined, treat it as enabled
       }))
       .filter((item) => item.title || item.description || item.image || item.link);
     if (values.limit) items = items.slice(0, values.limit);
 
     if (!items.length) {
-      showNotice('Nothing to show.', ['This tab has no rows with content, or the chosen columns are empty.']);
+      showMessage(values.emptyMessage, ['This tab has no rows with content, or the chosen columns are empty.']);
       return;
     }
 
@@ -87,5 +106,20 @@ async function main() {
     }
   }
 }
+
+// watermark
+document.addEventListener('DOMContentLoaded', () => {
+  const watermark = el('span', { class: 'watermark' }, 'Dynamic Grid Plugin');
+  watermark.addEventListener('click', () => {
+    console.log('watermark clicked');
+    openModal(el('div', { 'style': 'font-size: small;' },
+      el('h2',{ style: 'margin: 0;' }, 'Dynamic Grid Plugin'),
+      el('p', { style: 'margin-top: 0; font-size: small;' }, 'Created by ', el('a', { style: 'color: inherit;', href: 'https://github.com/21beckem/', target: '_blank', rel: 'noopener noreferrer' }, 'Michael Becker'), '.'),
+      el('p', {}, 'This embed was created with the Dynamic Grid Plugin for Google Sheets.'),
+      el('p', {}, 'You can use ', el('a', { style: 'color: inherit;', href: builderHref(), target: '_blank', rel: 'noopener noreferrer' }, 'the builder'), ' to customize this embed or create your own.')
+    ));
+  });
+  document.body.append(watermark);
+});
 
 main();

@@ -26,7 +26,7 @@ Only `uid` is required. Option names are case-insensitive.
 | `aspect` | `4:3` | `16:9`, `3:2`, `4:3`, `1:1`, `3:4` |
 | `gap` | `16` | Space between cards in px |
 | `limit` | all | Show only the first N rows |
-| `theme` | `transparent` | `transparent`, `light`, `dark` |
+| `background` | `transparent` | `transparent`, `light`, `dark` |
 | `accent` | `2f5d8a` | Hex color, without `#` |
 | `autoplay` | `0` | Carousel only: seconds between slides, 0 = off |
 

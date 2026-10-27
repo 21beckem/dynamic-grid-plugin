@@ -1,13 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
-.watermark {
-  position: fixed; bottom: 0; right: 0; z-index: 9999;
-  margin: 8px; margin: 4px 8px; font-size: 0.75rem; color: var(--muted); text-decoration: none;
-  color: var(--muted); font-size: 0.75rem; text-decoration: none;
-}
-.watermark:hover { color: var(--accent); }
-
 :root {
   /* Set from URL options by embed.js */
   --accent: #2f5d8a;
@@ -24,10 +17,9 @@
   --placeholder: #e9edf1;
   --danger: #b3261e;
 }
-:root[data-theme="light"] { --bg: #fff; }
+:root[data-background-theme="light"] { --bg: #fff; }
+:root[data-background-theme="dark"] { --bg: #13171c; }
 :root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #13171c;
   --fg: #eef1f5;
   --muted: #a5afbb;
   --line: rgba(255, 255, 255, 0.16);
@@ -43,6 +35,13 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 #app { padding: 4px; } /* room for focus outlines at the iframe edge */
+
+.watermark {
+  position: fixed; bottom: 0; right: 0; z-index: 9999; cursor: pointer;
+  margin: 0; padding: 8px; font-size: 0.75rem; color: var(--muted); text-decoration: none;
+  color: var(--muted); font-size: 0.75rem; text-decoration: none;
+}
+.watermark:hover { color: var(--accent); }
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
@@ -90,6 +89,50 @@ a.card:hover .card-title { text-decoration: underline; text-decoration-color: va
 .card-desc {
   margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--muted); white-space: pre-line;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal .modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal .modal-container {
+  position: relative;
+  z-index: 1;
+  max-width: 90%;
+  min-width: 200px;
+  max-height: 90%;
+  overflow: auto;
+  background: var(--card);
+  color: var(--fg);
+  padding: 16px;
+  border-radius: 8px;
+  padding-top: 32px; /* room for close button */
+}
+.modal .modal-close {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

@@ -48,10 +48,16 @@ const controls = {
   },
 
   select(option, ctx = { onChange:()=>{} }) {
-    const fallback = option.default ?? option.choices[0];
+    if (option.values) {
+      if (option.values.length !== option.choices.length)
+        throw new Error(`Option ${option.key} has mismatched values and choices.`);
+    } else {
+      option.values = option.choices;
+    }
+    const fallback = option.default ?? option.values[0];
     const select = el(
       'select', { id: idFor(option), name: option.key },
-      option.choices.map((c) => el('option', { value: c, text: capitalize(c) }))
+      option.choices.map((c, i) => el('option', { value: option.values[i], text: capitalize(c) }))
     );
     select.value = fallback;
     select.addEventListener('input', ctx.onChange);
@@ -227,9 +233,17 @@ function changed(option) {
 }
 
 function reset() {
-  for (const { control } of entries.values()) control.set('');
+  for (const [key, { control }] of entries) {
+    control.set(entries.get(key).option.defaultInBuilder ?? '');
+  }
   update();
   checkSheet();
+}
+
+function seedEntries(initial) {
+  for (const [key, { control }] of entries) {
+    control.set(initial[key] ?? entries.get(key).option.defaultInBuilder ?? '');
+  }
 }
 
 // ---- wiring -------------------------------------------------------------------
@@ -255,6 +269,6 @@ sizes.addEventListener('click', (event) => {
 build();
 // If opened from an embed's error message, start from that embed's settings.
 const { raw: initial } = parseOptions(location.search);
-for (const [key, { control }] of entries) control.set(initial[key] ?? '');
+seedEntries(initial);
 update();
 checkSheet();
