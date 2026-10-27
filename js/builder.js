@@ -4,6 +4,7 @@
 import { OPTIONS, GROUPS, parseValue, parseOptions, buildQuery } from './options.js';
 import { loadSheet, parseSheetId } from './sheets.js';
 import { UserError, el, debounce } from './util.js';
+import { createEditableControl, dropColumnDragAtPoint, insertIntoLastFocusedEditor, updateColumnDragAtPoint } from './editable.js';
 
 const form = document.getElementById('form');
 const urlInput = document.getElementById('embed-url');
@@ -12,7 +13,8 @@ const urlNote = document.getElementById('url-note');
 const frame = document.getElementById('frame');
 const preview = document.getElementById('preview');
 const sizes = document.getElementById('sizes');
-const columnList = document.getElementById('columns');
+const columnBank = document.getElementById('column-bank');
+const columnChips = document.getElementById('column-chips');
 
 const idFor = (option) => `opt-${option.key}`;
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -21,35 +23,38 @@ const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const controls = {
   text(option, ctx = { onChange:()=>{} }) {
-    const input = el('input', {
-      type: 'text', id: idFor(option), name: option.key,
-      placeholder: option.placeholder || '', spellcheck: 'false',
+    const control = createEditableControl(option, {
+      onChange: ctx.onChange,
+      allowColumns: !['uid', 'sheet'].includes(option.key),
+      reservedTokens: option.key === 'emptyMessage' ? ['details'] : [],
     });
-    input.addEventListener('input', ctx.onChange);
-    return { node: input, get: () => input.value, set: (v) => { input.value = v; }, onChange: ctx.onChange };
+    control.node.querySelector('.editable')?.setAttribute('name', option.key);
+    return control;
   },
 
   field(option, ctx = { onChange:()=>{} }) {
-    const control = controls.text(option, ctx);
-    control.node.placeholder = option.placeholder || 'Automatic';
-    control.node.setAttribute('list', 'columns'); // suggestions come from the loaded sheet
-    return control;
+    return createEditableControl(option, {
+      onChange: ctx.onChange,
+      placeholder: option.placeholder || 'Automatic',
+      allowColumns: true,
+    });
   },
 
   textarea(option, ctx = { onChange:()=>{} }) {
-    const input = el('textarea', {
-      id: idFor(option), name: option.key, rows: 3,
-      placeholder: option.placeholder || '', spellcheck: 'false',
+    return createEditableControl(option, {
+      onChange: ctx.onChange,
+      multiline: true,
+      allowColumns: !['uid', 'sheet'].includes(option.key),
     });
-    input.addEventListener('input', ctx.onChange);
-    return { node: input, get: () => input.value, set: (v) => { input.value = v; }, onChange: ctx.onChange };
   },
 
   textareaField(option, ctx = { onChange:()=>{} }) {
-    const control = controls.textarea(option, ctx);
-    control.node.placeholder = option.placeholder || 'Automatic';
-    control.node.setAttribute('list', 'columns'); // suggestions come from the loaded sheet
-    return control;
+    return createEditableControl(option, {
+      onChange: ctx.onChange,
+      placeholder: option.placeholder || 'Automatic',
+      multiline: true,
+      allowColumns: true,
+    });
   },
 
   number(option, ctx = { onChange:()=>{} }) {
@@ -203,11 +208,115 @@ function update() {
   setPreview(url.href);
 }
 
-// ---- sheet check (fills column suggestions) -----------------------------------
+// ---- sheet check (fills the draggable column bank) -----------------------------
 
 let checkToken = 0;
+let pointerDrag = null;
+let dragGhost = null;
+
+function hideColumnBank() {
+  columnBank.hidden = true;
+}
+
+function showColumnBank(shell) {
+  if (!columnChips.children.length) return;
+  if (columnBank.previousElementSibling !== shell) shell.after(columnBank);
+  columnBank.hidden = false;
+}
+
+function syncColumnBankVisibility() {
+  if (pointerDrag) return;
+  const active = document.activeElement;
+  if (active?.closest('.column-bank')) return;
+  const shell = active?.closest('.editable-shell');
+  if (shell?.dataset.columnTarget === 'true') showColumnBank(shell);
+  else hideColumnBank();
+}
+
+form.addEventListener('focusin', syncColumnBankVisibility);
+form.addEventListener('focusout', () => setTimeout(syncColumnBankVisibility, 0));
+
+function createDragGhost(chip, x, y) {
+  dragGhost = el('span', {
+    class: 'column-chip column-chip-drag-ghost',
+    text: chip.textContent,
+    'aria-hidden': 'true',
+  });
+  document.body.append(dragGhost);
+  positionDragGhost(x, y);
+}
+
+function positionDragGhost(x, y) {
+  if (!dragGhost) return;
+  dragGhost.style.left = `${x + 12}px`;
+  dragGhost.style.top = `${y + 12}px`;
+}
+
+function removeDragGhost() {
+  dragGhost?.remove();
+  dragGhost = null;
+}
+
+function finishPointerDrag(event) {
+  if (!pointerDrag || (event.pointerId !== undefined && event.pointerId !== pointerDrag.pointerId)) return;
+  if (pointerDrag.dragging && event.type !== 'pointercancel') {
+    event.preventDefault();
+    dropColumnDragAtPoint(event.clientX, event.clientY, pointerDrag.token);
+  }
+  pointerDrag.chip.classList.remove('is-dragging');
+  removeDragGhost();
+  pointerDrag = null;
+  syncColumnBankVisibility();
+}
+
+document.addEventListener('pointermove', (event) => {
+  if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+  const distance = Math.hypot(event.clientX - pointerDrag.startX, event.clientY - pointerDrag.startY);
+  if (!pointerDrag.dragging && distance < 5) return;
+  pointerDrag.dragging = true;
+  pointerDrag.chip.classList.add('is-dragging');
+  if (!dragGhost) createDragGhost(pointerDrag.chip, event.clientX, event.clientY);
+  positionDragGhost(event.clientX, event.clientY);
+  event.preventDefault();
+  updateColumnDragAtPoint(event.clientX, event.clientY);
+}, { passive: false });
+
+document.addEventListener('pointerup', finishPointerDrag, { passive: false });
+document.addEventListener('pointercancel', finishPointerDrag, { passive: false });
+
 function fillColumns(headers) {
-  columnList.replaceChildren(...headers.map((h) => el('option', { value: `{{${h}}}`, text: h })));
+  columnChips.replaceChildren(...headers.map((header) => {
+    const token = `{{${header}}}`;
+    const chip = el('span', {
+      class: 'column-chip',
+      text: header,
+      tabindex: '0',
+      role: 'listitem',
+      'aria-label': `Insert ${token}`,
+    });
+    chip.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || pointerDrag) return;
+      event.preventDefault();
+      chip.focus({ preventScroll: true });
+      chip.setPointerCapture?.(event.pointerId);
+      pointerDrag = {
+        chip,
+        token,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        dragging: false,
+      };
+    });
+    chip.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      insertIntoLastFocusedEditor(token);
+    });
+    return chip;
+  }));
+  if (!headers.length) hideColumnBank();
+  else syncColumnBankVisibility();
 }
 function setSheetStatus(text, state = '') {
   sheetStatus.textContent = text;

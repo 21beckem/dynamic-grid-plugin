@@ -43,6 +43,48 @@ input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-
   outline: 2px solid var(--accent); outline-offset: 1px;
 }
 
+.editable-shell { position: relative; min-width: 0; }
+.editable {
+  width: 100%; min-height: 38px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+  font: inherit; line-height: 1.35; overflow-wrap: anywhere; white-space: nowrap;
+  overflow-x: auto; outline: none;
+}
+.editable-multiline { min-height: 5.5rem; white-space: pre-wrap; overflow-y: auto; resize: vertical; }
+.editable:empty::before { content: attr(data-placeholder); color: #8a93a0; pointer-events: none; }
+.editable:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.editable-shell.is-drag-over .editable { border-color: var(--accent); }
+.inline-column-chip {
+  display: inline-block; margin: 0; padding: 1px 7px;
+  border: 1px solid #b9cde3; border-radius: 7px; background: #eaf3fc; color: #24537f;
+  font-size: 0.875em; line-height: 1.35; white-space: nowrap; user-select: none;
+  vertical-align: baseline;
+}
+.editable-drop-caret {
+  position: absolute; z-index: 2; width: 2px; min-height: 1em;
+  background: #2878d4; border-radius: 2px; box-shadow: 0 0 0 2px rgba(40, 120, 212, 0.16);
+  pointer-events: none;
+}
+
+.column-bank {
+  margin: 0 0 22px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--soft);
+}
+.column-bank h2 { margin: 0; font-size: 1rem; font-weight: 650; }
+.column-bank-help { margin: 2px 0 10px; color: var(--muted); font-size: 0.8125rem; }
+.column-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.column-chip {
+  display: inline-flex; align-items: center; min-height: 30px; padding: 4px 10px;
+  border: 1px solid #b9cde3; border-radius: 7px; background: #eaf3fc; color: #24537f;
+  font-size: 0.8125rem; line-height: 1.2; cursor: grab; user-select: none; touch-action: none;
+}
+.column-chip:hover, .column-chip:focus-visible { border-color: var(--accent); background: #dcecff; }
+.column-chip.is-dragging { opacity: 0.55; cursor: grabbing; }
+.column-chip-drag-ghost {
+  position: fixed; z-index: 10000; pointer-events: none; opacity: 0.94;
+  box-shadow: 0 4px 12px rgba(29, 35, 43, 0.24); cursor: grabbing;
+}
+
 .with-unit { position: relative; }
 .with-unit input { padding-right: 46px; }
 .unit { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); color: var(--muted); font-size: 0.8125rem; pointer-events: none; }

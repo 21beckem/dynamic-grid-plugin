@@ -14,7 +14,13 @@
   </header>
 
   <div class="layout">
-    <form id="form" class="form" autocomplete="off" novalidate></form>
+    <form id="form" class="form" autocomplete="off" novalidate>
+      <section id="column-bank" class="column-bank" hidden>
+        <h2>Sheet columns</h2>
+        <p class="column-bank-help">Drag a column into a field to insert its template.</p>
+        <div id="column-chips" class="column-chips" role="list" aria-label="Sheet columns"></div>
+      </section>
+    </form>
 
     <aside class="output">
       <section class="url-box">
@@ -43,7 +49,6 @@
     </aside>
   </div>
 
-  <datalist id="columns"></datalist>
   <noscript><p>This builder needs JavaScript.</p></noscript>
   <script type="module" src="../../js/builder.js"></script>
 </body>
