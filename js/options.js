@@ -48,7 +48,7 @@ export const OPTIONS = [
     help: 'A column name, plain text, or a template like {{First}} {{Last}}. When empty, a column named title or name is used, otherwise the first column.',
   },
   {
-    key: 'description', group: 'content', type: 'field',
+    key: 'description', group: 'content', type: 'textareaField',
     label: 'Description',
     help: 'Same rules as Title. When empty, a column named description or summary is used if there is one.',
   },
@@ -140,6 +140,7 @@ function numberError(option) {
 const PARSERS = {
   text: (text) => ({ value: text }),
   field: (text) => ({ value: text }),
+  textareaField: (text) => ({ value: text }),
   number(text, option) {
     const n = Number(text);
     const bad =

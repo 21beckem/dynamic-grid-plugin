@@ -36,6 +36,22 @@ const controls = {
     return control;
   },
 
+  textarea(option, ctx = { onChange:()=>{} }) {
+    const input = el('textarea', {
+      id: idFor(option), name: option.key, rows: 3,
+      placeholder: option.placeholder || '', spellcheck: 'false',
+    });
+    input.addEventListener('input', ctx.onChange);
+    return { node: input, get: () => input.value, set: (v) => { input.value = v; }, onChange: ctx.onChange };
+  },
+
+  textareaField(option, ctx = { onChange:()=>{} }) {
+    const control = controls.textarea(option, ctx);
+    control.node.placeholder = option.placeholder || 'Automatic';
+    control.node.setAttribute('list', 'columns'); // suggestions come from the loaded sheet
+    return control;
+  },
+
   number(option, ctx = { onChange:()=>{} }) {
     const input = el('input', {
       type: 'number', id: idFor(option), name: option.key, inputmode: 'numeric',
