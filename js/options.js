@@ -21,6 +21,7 @@
 //              the other option has that value
 
 import { viewNames } from './views/index.js';
+import { parseStyles, serializeStyles } from './styles.js';
 
 export const GROUPS = [
   { id: 'source', label: 'Sheet' },
@@ -119,6 +120,11 @@ export const OPTIONS = [
     key: 'accent', group: 'appearance', type: 'color', default: '#2f5d8a',
     label: 'Accent color', help: 'Used for focus outlines, hover highlights and carousel buttons.',
   },
+  {
+    key: 'styles', group: 'appearance', type: 'styles',
+    label: 'Card styles',
+    help: 'Add validated style attributes to individual parts of each card. Unconfigured attributes keep their normal theme defaults.',
+  },
 
   {
     key: 'autoplay', group: 'carousel', type: 'number', integer: true, min: 0, max: 60, default: 0, unit: 'sec',
@@ -163,6 +169,9 @@ const PARSERS = {
     if (hex.length === 3) hex = [...hex].map((c) => c + c).join('');
     return { value: `#${hex}` };
   },
+  styles(text) {
+    return parseStyles(text);
+  },
 };
 
 /** Parse one raw string. Empty input gives { value: undefined }. */
@@ -204,6 +213,8 @@ export function buildQuery(values) {
     let value = values[option.key];
     if (value === undefined || value === '' || value === option.default) continue;
     if (option.type === 'color') value = String(value).replace('#', '');
+    if (option.type === 'styles') value = serializeStyles(value);
+    if (value === undefined || value === '') continue;
     pairs.push(`${option.key}=${encodeURIComponent(value)}`);
   }
   return pairs.join('&');
