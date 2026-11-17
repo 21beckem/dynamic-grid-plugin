@@ -4,6 +4,14 @@ import { compileField } from './fields.js';
 import { views } from './views/index.js';
 import { UserError, el, openModal } from './util.js';
 
+const isInBuilder = (()=>{
+  try {
+    return window.parent !== window && window.parent.location.pathname.endsWith('/builder/')
+  } catch (e) {
+    return false;
+  }
+})();
+
 const root = document.getElementById('app');
 
 function applyAppearance(values) {
@@ -28,6 +36,12 @@ function builderHref(includeQuery = true) {
     url.search = location.search; // carry the current settings into the builder
   }
   return url.href;
+}
+
+function postResize() {
+  setTimeout(() => {
+    window.parent?.postMessage({ type: 'resize', height: root.offsetHeight }, '*');
+  }, 10);
 }
 
 function showNotice(headline, details = []) {
@@ -58,7 +72,7 @@ function showMessage(headline, details = []) {
 }
 
 function postBuilderMessage(message) {
-  if (window.parent !== window) window.parent.postMessage(message, location.origin);
+  if (isInBuilder) window.parent.postMessage(message, location.origin);
 }
 
 let contextHighlight = null;
@@ -76,6 +90,7 @@ function clearContextSession() {
 
 function highlightContextElement(element) {
   clearContextHighlight();
+  if (!isInBuilder) return;
   if (!element) return;
   const rect = element.getBoundingClientRect();
   const computed = getComputedStyle(element);
@@ -108,6 +123,7 @@ function updateContextHighlightPosition() {
 }
 
 function setContextHighlight(element) {
+  if (!isInBuilder) return;
   highlightContextElement(element);
   if (contextHighlight) contextHighlight.__target = element;
 }
@@ -139,6 +155,7 @@ document.addEventListener('pointerdown', (event) => {
 });
 
 document.addEventListener('contextmenu', (event) => {
+  if (!isInBuilder) return;
   const target = event.target instanceof Element ? event.target : null;
   const card = target?.closest('.card');
   if (!card) return;
@@ -161,6 +178,7 @@ async function main() {
   applyAppearance(values);
   if (errors.length) {
     showNotice('This embed link has a problem.', errors);
+    postResize();
     return;
   }
 
@@ -187,6 +205,7 @@ async function main() {
 
     if (!items.length) {
       showMessage(values.emptyMessage, ['This tab has no rows with content, or the chosen columns are empty.']);
+      postResize();
       return;
     }
 
@@ -198,11 +217,15 @@ async function main() {
       styles: values.styles,
     });
     root.setAttribute('aria-busy', 'false');
+    postResize();
   } catch (err) {
-    if (err instanceof UserError) showNotice(err.headline, err.details);
-    else {
+    if (err instanceof UserError) {
+      showNotice(err.headline, err.details);
+      postResize();
+    } else {
       console.error(err);
       showNotice('Something went wrong.', [String((err && err.message) || err)]);
+      postResize();
     }
   }
 }
